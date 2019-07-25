@@ -1,5 +1,6 @@
 const sha256 = require('sha256');
 const currentNodeurl = process.argv[3];
+const uuid = require('uuid/v1');//unique identifer for ths current node
 
 class BlockChain {
 
@@ -10,6 +11,7 @@ class BlockChain {
         this.createNewBlock(100, '0', '0');//genesys block,first block
         this.currentNodeUrl = currentNodeurl;
         this.networkNodes = [];
+        this.node_address = uuid().split('-').join('');
     }
 
     createNewBlock(nance, previousBlockHash, hash) {

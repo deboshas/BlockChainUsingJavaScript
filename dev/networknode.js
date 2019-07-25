@@ -1,10 +1,8 @@
 const express = require('express');
 const BlockChain = require('./blockChain');
 const bodyParser = require('body-parser');
-const uuid = require("uuid/v1");//unique identifer for ths current node
 const port = process.argv[2];//port for different nodes
 const url = process.argv[3];
-const node_Address = uuid().split('-').join('');
 const rp = require('request-promise');
 var app = express();
 app.use(bodyParser.json());
@@ -39,7 +37,7 @@ app.get('/mine', function (req, res) {
     const newBlock = bitcoin.createNewBlock(nance, prevblockHash, hash);
 
     //reward this current node address with uuid unique id 
-    bitcoin.createNewTransaction(12.5, "mine-reward-programme", `http://localhost:${port}`);
+    bitcoin.createNewTransaction(12.5, "mine-reward-programme", bitcoin.node_address);
 
     res.json({
 
