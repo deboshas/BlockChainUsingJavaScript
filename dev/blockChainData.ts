@@ -1,6 +1,7 @@
 import { Block } from "./Block";
 import { Transcation } from "./transcation";
 const sha256 = require('sha256');
+const uuid = require('uuid/v1');//unique identifer for ths current node
 
 export class BlockChain {
 
@@ -8,11 +9,11 @@ export class BlockChain {
     CurrentNodeUrl: string;
     NetworkNodeUrls: string[]
     PendingTranscation: Transcation[];
-
+    node_address: string;
 
     constructor() {
 
-
+        this.node_address = uuid().spilt('-').join('');
     }
 
     createTranscation(amount, sender, receiver) {

@@ -49,18 +49,30 @@ app.get('/mine', function (req, res) {
 
 //register a node and broadcast it in the block chain network
 app.post('/register-and-broadcast', function (res, rev) {
-
+    //new node wants to join our network
     const newNode = req.body.url;
-    //regsiter with self 
+    let registerNodePromises = [];
+    //regsiter the new node  with self 
     if (bitcoin.networkNodes.indexOf(newNode) === -1) {
         bitcoin.networkNodes.push(newNode);
     }
-    //broad cast it to the  entire netwrk
+    //broadcast the new node  to the  entire network 
     bitcoin.networkNodes.foreach(networkNodeUrl => {
-        //hit register node endpoint
+        //hit register node endpoint for all nodes
+        let requestOptions = {
+            url: networkNodeUrl + "/register-node",
+            method: 'Post',
+            body: { newNodeUrl: newNode },
+            josn: true
 
+        }
+        registerNodePromises.push(rp(requestOptions));
+    });
+    Promise.all(registerNodePromises)
+        .then(data => {
+            //use the data
 
-    })
+        })
 
 })
 
