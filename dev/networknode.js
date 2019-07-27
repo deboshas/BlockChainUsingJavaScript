@@ -50,23 +50,24 @@ app.get('/mine', function (req, res) {
 //register a node and broadcast it in the block chain network
 app.post('/register-and-broadcast', function (req, res) {
     //new node wants to join our network
-    console.log(req.body.url);
-    const newNodeUrl = req.body.url;
+
+    const newNodeUrl = req.body.newNodeUrl;
     let registerNodePromises = [];
+
     //regsiter the new node  with self 
 
     if (bitcoin.networkNodes.indexOf(newNodeUrl) === -1) {
         bitcoin.networkNodes.push(newNodeUrl);
     }
-    console.log(bitcoin.networkNodes);
+
     //broadcast the new node  to the  entire network 
     bitcoin.networkNodes.forEach(networkNodeUrl => {
         //hit register node endpoint for all nodes
         let requestOptions = {
             url: networkNodeUrl + "/register-node",
             method: 'Post',
-            body: { "newNodeUrl": newNodeUrl },
-            josn: true
+            body: { newNodeUrl: newNodeUrl },
+            json: true
 
         }
         registerNodePromises.push(rp(requestOptions));
@@ -77,12 +78,12 @@ app.post('/register-and-broadcast', function (req, res) {
             let bulkrequestOptions = {
                 url: newNodeUrl + "/register-node-bulk",
                 method: 'Post',
-                body: { allnetworkNodeUrl: [...bitcoin.networkNodes, bitcoin.currentNodeUrl] },
-                josn: true
+                body: { allnetworkNodes: [...bitcoin.networkNodes, bitcoin.currentNodeUrl] },
+                json: true
 
             }
 
-            rp(bulkrequestOptions);
+            return rp(bulkrequestOptions)
 
         }).then(data => {
 
@@ -94,10 +95,8 @@ app.post('/register-and-broadcast', function (req, res) {
 //register a node  to  the block chain network
 app.post('/register-node', function (req, res) {
 
-
-    bitcoin.networkNodes.push(req.body.url);
-    if (bitcoin.networkNodes.indexOf(req.body.url) === -1 && req.body.url != bitcoin.currentNodeUrl) {
-        bitcoin.networkNodes.push(req.body.url);
+    if (bitcoin.networkNodes.indexOf(req.body.newNodeUrl) === -1 && req.body.newNodeUrl != bitcoin.currentNodeUrl) {
+        bitcoin.networkNodes.push(req.body.newNodeUrl);
         res.json({ note: `New node is registerd successfully at ${bitcoin.currentNodeUrl} ` })
     }
 
