@@ -8,7 +8,7 @@ class BlockChain {
 
         this.chain = [];
         this.pendingTransactions = [];
-        this.createNewBlock(100, '0', '0');//genesys block,first block
+        this.addBlocktoChain(this.createNewBlock(100, '0', '0'));//genesys block,first block
         this.currentNodeUrl = currentNodeurl;
         this.networkNodes = [];
         this.node_address = uuid().split('-').join('');
@@ -25,9 +25,13 @@ class BlockChain {
         };
 
         this.pendingTransactions = [];
-        this.chain.push(newBlock);
+
 
         return newBlock;
+    }
+
+    addBlocktoChain(block) {
+        this.chain.push(block);
     }
 
 
@@ -43,17 +47,17 @@ class BlockChain {
             amount: amount,
             sender: sender,
             receiver: receiver,
-
+            transcationId: uuid().split('-').join('')
         };
+        return newTransaction;
 
-        return this.addTransactionToPendingTransactions(newTransaction);
     }
 
 
     addTransactionToPendingTransactions(transactionObj) {
 
         this.pendingTransactions.push(transactionObj);
-        return this.getLastBlock()['index'] + 1;
+
     }
 
 

@@ -17,11 +17,12 @@ app.get('/blockchain', function (req, res) {
 })
 
 app.post('/transcation', function (req, res) {
-    const lastBlockIndex = bitcoin.createNewTransaction(req.body.amount, req.body.sender, req.body.receiver);
-    res.json({ note: `Transcation will be added to  block at  ${lastBlockIndex} ` });
+    bitcoin.addTransactionToPendingTransactions(req.body.transcationData);
+    res.json({ note: `Transcation will be added to  block at  ` });
 })
-//create a  new block for us 
-app.get('/mine', function (req, res) {
+//create a  new block for us  by mining
+app.post('/mine', function (req, res) {
+    registerNodePromises = [];
     const lastBlock = bitcoin.getLastBlock();
     const prevblockHash = lastBlock.hash;
     const currentBlockdata = {
@@ -29,24 +30,71 @@ app.get('/mine', function (req, res) {
         index: lastBlock.index + 1
 
     }
-    const nance = bitcoin.proofOfWork(prevblockHash, currentBlockdata);
+    let nance = bitcoin.proofOfWork(prevblockHash, currentBlockdata);
 
-    const hash = bitcoin.hashBlock(prevblockHash, currentBlockdata, nance);
+    let hash = bitcoin.hashBlock(prevblockHash, currentBlockdata, nance);
 
 
-    const newBlock = bitcoin.createNewBlock(nance, prevblockHash, hash);
+    let newBlock = bitcoin.createNewBlock(nance, prevblockHash, hash);
+    //broad  cast the mined  block to teh enire network 
+
+    bitcoin.networkNodes.forEach(networkNodeUrl => {
+        let requestOptions = {
+            url: networkNodeUrl + "/receive/new/block",
+            method: 'Post',
+            body: { block: newBlock },
+            json: true
+
+        }
+        registerNodePromises.push(rp(requestOptions));
+    });
+
+
+    Promise.all(registerNodePromises)
+        .then(data => {
+            //add the block to chain if  teh block is accepted 
+            bitcoin.addBlocktoChain(newBlock);
+            //reward teh miner with a bitcoin
+            let newTranscation = bitcoin.createNewTransaction(12.5, "mine-reward-programme", bitcoin.node_address);
+            //broadcast the new reward  Tranascation to the entire network
+            let requestOptions = {
+                url: bitcoin.currentNodeUrl + "/transcation/broadcast",
+                method: 'Post',
+                body: {
+                    transcationData: {
+                        "amount": "12.5",
+                        "sender": "mine reward programme",
+                        "receiver": bitcoin.currentNodeUrl
+
+
+                    }
+                },
+                json: true
+
+            }
+            return rp(requestOptions);
+
+
+
+
+        })
+        .then(data => {
+            res.json({
+
+                note: `New block mined successfully at ${newBlock.index}  and broadcasted successfully`,
+                block: newBlock
+            })
+
+        })
 
     //reward this current node address with uuid unique id 
-    bitcoin.createNewTransaction(12.5, "mine-reward-programme", bitcoin.node_address);
 
-    res.json({
 
-        note: `New block mined successfully at ${newBlock.index}`,
-        block: newBlock
-    })
+
 
 })
 
+//create a decentrilized network--start
 //register a node and broadcast it in the block chain network
 app.post('/register-and-broadcast', function (req, res) {
     //new node wants to join our network
@@ -122,6 +170,73 @@ app.post('/register-node-bulk', function (req, res) {
 
 })
 
+//create a decentrilized network--END
+
+//sync the  nodes for transcation and mining --start
+//this endpoint will be hit whenever we try to create a new transcsation
+app.post('/transcation/broadcast', function (req, res) {
+
+    let network_nodes = bitcoin.network_nodes;
+    let transcationData = req.body.transcationData;
+    let registerNodePromises = [];
+
+    //create the  transcation in the current node
+
+    let newTranscation = bitcoin.createNewTransaction(transcationData.amount, transcationData.sender, transcationData.receiver);
+    bitcoin.addTransactionToPendingTransactions(newTranscation);
+
+
+    //borad cast the  transcation to the enitre netwoprk
+    bitcoin.networkNodes.forEach(networkNodeUrl => {
+        let requestOptions = {
+            url: networkNodeUrl + "/transcation",
+            method: 'Post',
+            body: { transcationData: newTranscation },
+            json: true
+
+        }
+        registerNodePromises.push(rp(requestOptions));
+    });
+
+
+    Promise.all(registerNodePromises)
+        .then(data => {
+
+            res.json({ note: 'Transcation has benn boradcasted to every other node ' });
+        });
+});
+
+app.post('/receive/new/block', function (req, res) {
+    let newBlock = req.body.block;
+    //validate teh new block upon receiving to check wheather teh block is legitimate or  not
+    let lastBlock = bitcoin.getLastBlock();
+    let correctHash = lastBlock.hash === newBlock.previousBlockHash;
+    let correctindex = lastBlock.index === (newBlock.index - 1);
+    if (correctHash && correctindex) {
+        bitcoin.addBlocktoChain(newBlock);
+        bitcoin.pendingTransactions = [];
+        res.json({
+            note: `New block is received and accepted and added to teh chain ${newBlock}`
+        })
+
+    }
+
+    else {
+
+        res.json({
+            note: `New block is rejected by the  network  ${newBlock}`
+        })
+
+    }
+
+})
+
+
+
+
+
+
+//sync the  nodes for transcation and mining --End
 app.listen(port, function () {
     console.log(`Listing on port ${port}`);
 });
