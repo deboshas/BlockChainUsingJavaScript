@@ -231,8 +231,31 @@ app.post('/receive/new/block', function (req, res) {
 
 })
 
+app.get('/consensus', (req, res) => {
+
+    registerNodePromises = [];
+    bitcoin.networkNodes.forEach(networkNodeUrl => {
+        let requestOptions = {
+            url: networkNodeUrl + "/blockchain",
+            method: 'Get',
+            json: true
+
+        }
+        registerNodePromises.push(rp(requestOptions));
+    });
+
+    //longest chain rule implemenattion
+    Promise.all(registerNodePromises)
+        .then(blockChains => {
+
+            blockChains.forEach(chain => {
 
 
+            })
+        });
+
+
+})
 
 
 

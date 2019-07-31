@@ -79,6 +79,37 @@ class BlockChain {
         return nance;
     }
 
+    //need to fix it,return true in case of a block been  compromised
+    ChainIsValid(blockChain) {
+        let isValidChain = true;
+        let isvalidGenesysBlock = true;
+        let genesysBlock = blockChain.chain[0];
+        let isValidHash;
+        //longest chain rule 
+        //validate each an every block in current  node by comparing prev block hash with the  current block and also validating each and every data in the block by rehashing it
+        for (var i = 1; i < blockChain.chain.length; i++) {
+            let prevBlock = blockChain.chain[i - 1];
+            let currentBlock = blockChain.chain[i];
+
+
+            isValidChain = this.hashBlock(prevBlock.hash, { transcations: currentBlock.transactions, index: currentBlock.index }, currentBlock.nance).substring(0, 4) != '0000' ? false : true;
+            if (prevBlock.hash != currentBlock.previousBlockHash) {
+                isValidChain = false;
+                break;
+            }
+        }
+
+        if ((genesysBlock.nance != "100") || (genesysBlock.hash != "0") || (genesysBlock.previousBlockHash
+            != "0") && (genesysBlock.transactions.length != 0)) {
+            isvalidGenesysBlock = false
+        }
+
+        return isValidChain && isvalidGenesysBlock;
+        //validate the data for evry block by re hashing
+
+
+    }
+
 
 }
 
