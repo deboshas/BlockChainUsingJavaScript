@@ -84,21 +84,22 @@ class BlockChain {
         let isValidChain = true;
         let isvalidGenesysBlock = true;
         let genesysBlock = blockChain.chain[0];
-        let isValidHash;
         //longest chain rule 
         //validate each an every block in current  node by comparing prev block hash with the  current block and also validating each and every data in the block by rehashing it
         for (var i = 1; i < blockChain.chain.length; i++) {
             let prevBlock = blockChain.chain[i - 1];
             let currentBlock = blockChain.chain[i];
+            if (this.hashBlock(prevBlock.hash, { transcations: currentBlock.transactions, index: currentBlock.index }, currentBlock.nance).substring(0, 4) != '0000') {
+                isValidChain = false;
+                break;
 
-
-            isValidChain = this.hashBlock(prevBlock.hash, { transcations: currentBlock.transactions, index: currentBlock.index }, currentBlock.nance).substring(0, 4) != '0000' ? false : true;
+            }
             if (prevBlock.hash != currentBlock.previousBlockHash) {
                 isValidChain = false;
                 break;
             }
         }
-
+        //check for genesys block 
         if ((genesysBlock.nance != "100") || (genesysBlock.hash != "0") || (genesysBlock.previousBlockHash
             != "0") && (genesysBlock.transactions.length != 0)) {
             isvalidGenesysBlock = false
